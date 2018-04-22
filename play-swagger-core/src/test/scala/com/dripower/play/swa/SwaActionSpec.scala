@@ -1,10 +1,11 @@
-package com.dripower.play.swa
+package test.com.dripower.play.swa
 
 import akka.util.ByteString
 import play.api.mvc._
 import play.api.libs.json._
 import play.api.http.Writeable
 import scala.concurrent._
+import com.dripower.play.swa._
 
 case class PersonGet(id: Long)
 case class Person(id: Long, name: String, age: Int)
@@ -25,4 +26,9 @@ class ExampleController(val controllerComponents: ControllerComponents)(implicit
     val personGet = req.body
     Future.successful(Person(personGet.id, "foo", 1))
   }
+}
+
+object  ExampleController {
+  import swagger.api._
+  PlaySwagger.playApi[ExampleController]()
 }
