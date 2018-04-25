@@ -20,7 +20,9 @@ val commonSettings = Seq(
     "com.chuusai"    %% "shapeless"   % "2.3.3",
     "org.typelevel"  %% "cats-effect" % "0.9",
     "org.scalatest"  %% "scalatest"   % "3.0.5" % "test",
-    "org.scalacheck" %% "scalacheck"  % "1.13.4" % "test"
+    "org.scalacheck" %% "scalacheck"  % "1.13.4" % "test",
+    "joda-time" % "joda-time" % "2.9.9"
+
   )
 )
 
