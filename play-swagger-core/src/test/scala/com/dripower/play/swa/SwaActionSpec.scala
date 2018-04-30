@@ -7,6 +7,7 @@ import play.api.http.Writeable
 import scala.concurrent._
 import com.dripower.play.swa._
 import org.joda.time._
+import org. scalatest._
 
 
 case class Car(id:Long,logo:String)
@@ -64,7 +65,9 @@ class ExampleController(val controllerComponents: ControllerComponents)(implicit
 
 
 
-object  ExampleController {
-  import swagger.api._
-  PlaySwagger.playApi[ExampleController]()
+object  ExampleController extends FlatSpec{
+  def getApi() = {
+    import swagger.api._
+    PlaySwagger.playApi[ExampleController]()
+  }
 }

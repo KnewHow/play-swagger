@@ -13,8 +13,7 @@ class Macros(val c: Context) {
       case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
     }.toList
     val (routes,apis) = extractData(ms)
-    println(apis)
-    c.Expr[Unit](q""" println("Hello macro")""")
+    q"$apis"
   }
 
   private def extractData(list:List[MethodSymbol]) = {
