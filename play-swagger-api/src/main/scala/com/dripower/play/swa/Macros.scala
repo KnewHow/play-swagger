@@ -1,32 +1,54 @@
-package swagger.api
+package play.swagger.api
 
 import java.io.FileWriter
 import scala.reflect.macros.whitebox._
-import com.dripower.play.route._
 import org.joda.time._
+import play.swagger.route.api.PlayRoute
 
 class Macros(val c: Context) {
   import c.universe._
+
   def api[C: c.WeakTypeTag](a:c.Expr[Any]) = {
     val controller = c.weakTypeTag[C].tpe
     val ms = weakTypeTag[C].tpe.decls.collect {
       case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
     }.toList
-    val (routes,apis) = extractData(ms)
+    val apis  = extractApis(ms)
     q"$apis"
   }
 
-  private def extractData(list:List[MethodSymbol]) = {
+  def routes[T: c.WeakTypeTag](a: c.Expr[T]) = {
+    val ms = weakTypeTag[T].tpe.decls.collect {
+      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
+    }.toList
+
+    val routes =  ms.map { m =>
+      val r = extractRoute(m)
+      (r.requestPath) -> genMethod[T](a,m)
+    }.toMap
+
+     q"_root_.scala.collection.immutable.Map(..$routes)"
+
+  }
+
+  private  def genMethod[T](a: c.Expr[T], m: MethodSymbol) = {
+     q"""
+     import _root_.shapeless._
+     import _root_.shapeless.syntax.std.function._
+     (${a}.$m _).toProduct
+      """
+  }
+
+
+  private def extractApis(list:List[MethodSymbol]) = {
     import scala.collection.mutable.ListBuffer
-    val routes = new ListBuffer[PlayRoute]()
     val apis = new ListBuffer[String]()
     for(m <- list) {
       val r = extractRoute(m)
       val api = extractApi(m,r)
-      routes += r
       apis += toJSONStr(api)
     }
-    (routes.toList, apis.toList)
+    apis.toList
   }
 
    private def toJSONStr(api:Map[String,Any],tab:String = " "):String = {
@@ -112,9 +134,9 @@ class Macros(val c: Context) {
     PlayRoute(
       method,
       requestPath,
-      actionPath
     )
   }
+
 
   private def dealMultiplyName(name:String):String = {
     name.contains("[") match {

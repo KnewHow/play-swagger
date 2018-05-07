@@ -1,7 +1,8 @@
-name := "play-swagger"
-organization := "swagger"
-version := "0.1.1-SNAPSHOT"
-scalaVersion := "2.12.5"
+name              := "play-swagger"
+organization      := "dripcom.swagger"
+version           := "0.2-SNAPSHOT"
+scalaVersion      := "2.12.4"
+publishMavenStyle := true
 
 lazy val root =
   project

@@ -1,12 +1,15 @@
 package test.com.dripower.play.swa
 
 import org. scalatest._
-
-class MyTest extends FlatSpec {
+import play.swagger.api.PlaySwagger
+class PlaySwaggerSpec extends FlatSpec {
   "A play swagger" should "return apis" in {
     val result = ExampleController.getApi()
-    println("xixix")
-    println("result" + result)
+    println(s"router ->\n $result")
     assert(true)
+  }
+
+  "A play swagger" should "return route" in {
+
   }
 }
