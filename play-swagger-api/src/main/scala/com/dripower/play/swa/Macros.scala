@@ -45,10 +45,19 @@ class Macros(val c: Context) {
     val apis = new ListBuffer[String]()
     for(m <- list) {
       val r = extractRoute(m)
-      val api = extractApi(m,r)
+      val api = extractApi(m, r, getActionDescrip(m))
       apis += toJSONStr(api)
     }
     apis.toList
+  }
+
+  private def getActionDescrip(m: MethodSymbol):Map[String, Any] = {
+    val ans = m.annotations
+    val a = ans(0).tree.productElement(1)
+    a match {
+      case l:List[_] => Map("descrip" -> l(0).toString)
+      case _         => Map("descripe" -> "")
+    }
   }
 
    private def toJSONStr(api:Map[String,Any],tab:String = " "):String = {
@@ -59,11 +68,11 @@ class Macros(val c: Context) {
   }
 
 
-  private def extractApi(m: MethodSymbol,r:PlayRoute) = {
+  private def extractApi(m: MethodSymbol,r:PlayRoute,actionDes:Map[String, Any]) = {
     val typeParams = m.returnType.typeArgs
     val req = extractMember(typeParams(0))
     val res =  extractMember(typeParams(1))
-    val api:Map[String,Any] = Map(("route",r.requestPath),("method",r.method),("req",req),("res",res))
+    val api:Map[String,Any] = Map(("route",r.requestPath),("method",r.method),("req",req),("res",res)) ++ actionDes
     api
   }
 
