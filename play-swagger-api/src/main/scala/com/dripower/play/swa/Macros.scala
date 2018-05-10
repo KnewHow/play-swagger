@@ -53,11 +53,16 @@ class Macros(val c: Context) {
 
   private def getActionDescrip(m: MethodSymbol):Map[String, Any] = {
     val ans = m.annotations
-    val a = ans(0).tree.productElement(1)
-    a match {
-      case l:List[_] => Map("descrip" -> removeStrQuotation(l(0).toString))
-      case _         => Map("descripe" -> "")
+    if(ans.nonEmpty) {
+      val a = ans(0).tree.productElement(1)
+      a match {
+        case l:List[_] => Map("descrip" -> removeStrQuotation(l(0).toString))
+        case _         => Map("descripe" -> "")
+      }
+    } else  {
+       Map("descripe" -> "")
     }
+
   }
 
   private def removeStrQuotation(s: String): String = {
@@ -80,34 +85,37 @@ class Macros(val c: Context) {
     val typeParams = m.returnType.typeArgs
     val req = extractMember(typeParams(0))
     val res =  extractMember(typeParams(1))
-    println("reqqqqqqqqqqqq" + req)
-    println("ressssssssssss" + res)
     val api:Map[String,Any] =actionDes ++  Map(("route",r.requestPath),("method",r.method),("req",req),("res",res))
     api
   }
 
+  /**
+   * 设计思路：
+   * 对于基本类型的属性，使用 id: Map{type -> Int, descrip -> xxx} 来描述
+   * 对于包装数据类型，如：case class Car(id:Long,logo:String)
+   * 使用 car: Map{type -> Map{"logo" -> Map{type -> String,descrip -> xxx}}}
+   * 对于 List[基本类型] 如 names: List[String] 使用 names: Map{type -> List[String], descrip -> xxx}
+   * 对于 List[包装类型] 如 friends: List[Friend] 使用 friends: List[Friends]: Map{descrip -> xxx, type -> Map{"name" -> Map{type -> String, descrip -> xxx }}}
+   */
   private def extractMember(t:c.universe.Type):Map[String,Any] = {
     if(isList(t)) { // 用于t直接为List类型
       Map(("List",extractMember(t.typeArgs(0))))
     } else {
       t.members.collect {
         case m: MethodSymbol if m.isCaseAccessor =>
-          val ans = m.annotations
-          if(ans.size!=0) {
-            println(ans(0).tree.productElement(1))
-          }
+          val des = getActionDescrip(m)
           if(isBasicType(m.returnType)) {
-            (m.name.toString,dealMultiplyName(m.returnType.toString))
+            (m.name.toString, Map("type" -> dealMultiplyName(m.returnType.toString)) ++ des )
           } else if (isList(m.returnType)) { // 用于成员含有List类型
             val t = m.returnType.typeArgs(0)
             if(isBasicType(t)) { // List的基本类型，如List[String]
-              (m.name.toString,m.returnType.toString)
+              (m.name.toString, Map("type" -> m.returnType.toString) ++ des)
             } else {
-              (s"${m.name.toString}:${dealMultiplyName(m.returnType.toString)}",extractMember(t)) // List的对象类型，如List[Person]
+              (s"${m.name.toString}:${dealMultiplyName(m.returnType.toString)}", Map("type" -> extractMember(t)) ++ des ) // List的对象类型，如List[Person]
             }
           }
           else { //对象包对象的情况
-            (m.name.toString,extractMember(m.returnType))
+            (m.name.toString, Map("type" -> extractMember(m.returnType)) ++ des)
           }
 
       }.toMap

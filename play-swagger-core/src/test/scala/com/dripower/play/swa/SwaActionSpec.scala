@@ -11,14 +11,44 @@ import org.scalatest._
 import play.swagger.annotation._
 import scala.annotation.meta
 
-case class Car(id:Long,logo:String)
+case class Car(
+  @(FieldAnnotation @meta.getter)(descrip="汽车ID")
+    id:Long,
+  @(FieldAnnotation @meta.getter)(descrip="汽车标志")
+    logo:String
+)
 case class PersonGet(
-  @(FieldAnnotation @meta.getter)(descrip="ID")
+  @(FieldAnnotation @meta.getter)(descrip="人的ID")
   id: Long
 )
-case class Person(id: Long, name: String, age: Int,car: Car,level1ExpiredAt: Option[DateTime] = None,avatar: Option[String] = None,gmtCreate:DateTime = DateTime.now(),gmtModified:DateTime = DateTime.now(),friends:List[Friend] = List())
-
-case class Friend(id:Long,name:String,relation:String)
+case class Person(
+  @(FieldAnnotation @meta.getter)(descrip="人的ID")
+    id: Long,
+   @(FieldAnnotation @meta.getter)(descrip="人的名字")
+     name: String,
+  @(FieldAnnotation @meta.getter)(descrip="人的年龄")
+    age: Int,
+  @(FieldAnnotation @meta.getter)(descrip="人所属的汽车")
+    car: Car,
+  @(FieldAnnotation @meta.getter)(descrip="测试时间戳")
+    level1ExpiredAt: Option[DateTime] = None,
+  @(FieldAnnotation @meta.getter)(descrip="人的头像")
+    avatar: Option[String] = None,
+  @(FieldAnnotation @meta.getter)(descrip="创建时间")
+    gmtCreate:DateTime = DateTime.now(),
+  @(FieldAnnotation @meta.getter)(descrip="修改时间")
+     gmtModified:DateTime = DateTime.now(),
+  @(FieldAnnotation @meta.getter)(descrip="所属的朋友")
+    friends:List[Friend] = List()
+)
+case class Friend(
+  @(FieldAnnotation @meta.getter)(descrip="朋友的ID")
+    id:Long,
+  @(FieldAnnotation @meta.getter)(descrip="朋友的名称")
+    name:String,
+  @(FieldAnnotation @meta.getter)(descrip="关系")
+    relation:String
+)
 case class Ids(ids:List[Long],op:Option[String])
 
 object PersonGet {
@@ -46,6 +76,13 @@ class ExampleController(val controllerComponents: ControllerComponents)(implicit
     Future.successful(Person(personGet.id, "foo", 1,Car(1L,"奔驰")))
   }
 
+
+  @ActionAnnotation(descrip="测试 GETTTTTTTT 请求")
+   def exampleGetttttttAction:GetSwaAction[PersonGet, List[Person]] = Swa.asyncGet[PersonGet,List[Person]](parse.json[PersonGet]) { req =>
+    val personGet = req.body
+    Future.successful(List(Person(personGet.id, "foo", 1,Car(1L,"奔驰"))))
+   }
+
    @ActionAnnotation(descrip="测试 POST 请求")
   def examplePostAction:PostSwaAction [PersonGet, Person] = Swa.asyncPost[PersonGet,Person](parse.json[PersonGet]) { req =>
     val personGet = req.body
@@ -58,15 +95,6 @@ class ExampleController(val controllerComponents: ControllerComponents)(implicit
     Future.successful(List(Person(personGet.id, "foo", 1,Car(1L,"奔驰"))))
    }
 
-  // def getPersonLists:GetSwaAction[Ids,List[Person]] = Swa.asyncGet[Ids,List[Person]](parse.json[Ids]) { req =>
-  //   val ids = req.body.ids
-  //   import scala.collection.mutable.ListBuffer
-  //   val results = new ListBuffer[Person]()
-  //   for(id <- ids) {
-  //     results += (Person(id, "foo", 1,Car(1L,"奔驰")))
-  //   }
-  //   Future.successful(results.toList)
-  // }
 }
 
 
