@@ -9,10 +9,13 @@ import org.joda.time._
 import com.dripower.play.swa._
 import org.scalatest._
 import play.swagger.annotation._
-
+import scala.annotation.meta
 
 case class Car(id:Long,logo:String)
-case class PersonGet(id: Long)
+case class PersonGet(
+  @(FieldAnnotation @meta.getter)(descrip="ID")
+  id: Long
+)
 case class Person(id: Long, name: String, age: Int,car: Car,level1ExpiredAt: Option[DateTime] = None,avatar: Option[String] = None,gmtCreate:DateTime = DateTime.now(),gmtModified:DateTime = DateTime.now(),friends:List[Friend] = List())
 
 case class Friend(id:Long,name:String,relation:String)

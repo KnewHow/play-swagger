@@ -55,8 +55,16 @@ class Macros(val c: Context) {
     val ans = m.annotations
     val a = ans(0).tree.productElement(1)
     a match {
-      case l:List[_] => Map("descrip" -> l(0).toString)
+      case l:List[_] => Map("descrip" -> removeStrQuotation(l(0).toString))
       case _         => Map("descripe" -> "")
+    }
+  }
+
+  private def removeStrQuotation(s: String): String = {
+    if(s.startsWith("\"") && s.endsWith("\"")) {
+      s.substring(1,s.length-1)
+    } else {
+      s
     }
   }
 
@@ -72,7 +80,9 @@ class Macros(val c: Context) {
     val typeParams = m.returnType.typeArgs
     val req = extractMember(typeParams(0))
     val res =  extractMember(typeParams(1))
-    val api:Map[String,Any] = Map(("route",r.requestPath),("method",r.method),("req",req),("res",res)) ++ actionDes
+    println("reqqqqqqqqqqqq" + req)
+    println("ressssssssssss" + res)
+    val api:Map[String,Any] =actionDes ++  Map(("route",r.requestPath),("method",r.method),("req",req),("res",res))
     api
   }
 
@@ -82,6 +92,10 @@ class Macros(val c: Context) {
     } else {
       t.members.collect {
         case m: MethodSymbol if m.isCaseAccessor =>
+          val ans = m.annotations
+          if(ans.size!=0) {
+            println(ans(0).tree.productElement(1))
+          }
           if(isBasicType(m.returnType)) {
             (m.name.toString,dealMultiplyName(m.returnType.toString))
           } else if (isList(m.returnType)) { // 用于成员含有List类型
