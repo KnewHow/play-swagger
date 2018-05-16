@@ -56,11 +56,11 @@ class Macros(val c: Context) {
     if(ans.nonEmpty) {
       val a = ans(0).tree.productElement(1)
       a match {
-        case l:List[_] => Map("descrip" -> removeStrQuotation(l(0).toString))
-        case _         => Map("descripe" -> "")
+        case l:List[_] => Map("describe" -> removeStrQuotation(l(0).toString))
+        case _         => Map("describe" -> "")
       }
     } else  {
-       Map("descripe" -> "")
+      Map("describe" -> "注解解析错误")
     }
 
   }
