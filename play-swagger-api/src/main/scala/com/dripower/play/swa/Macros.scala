@@ -52,6 +52,7 @@ class Macros(val c: Context) {
   }
 
   private def getActionDescrip(m: MethodSymbol):Map[String, Any] = {
+    println(s"methodname -> ${m}")
     val ans = m.annotations
     if(ans.nonEmpty) {
       val a = ans(0).tree.productElement(1)
