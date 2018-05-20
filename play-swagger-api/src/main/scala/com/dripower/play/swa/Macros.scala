@@ -1,30 +1,82 @@
 package play.swagger.api
 
 import java.io.FileWriter
-import scala.reflect.macros.whitebox._
+import scala.reflect.macros.blackbox._
 import org.joda.time._
 import play.swagger.route.api.PlayRoute
 
 class Macros(val c: Context) {
   import c.universe._
 
-  def api[C: c.WeakTypeTag](a:c.Expr[Any]) = {
+   def obtainAnnotation[C: c.WeakTypeTag]() = {
+    val methodList = weakTypeTag[C].tpe.decls.collect {
+      case m: MethodSymbol if !m.isConstructor  => m
+    }.toList
+
+    val results =  methodList.collect {
+       case m => abtractAnnotation(m)
+     }
+     q"$results"
+  }
+
+  private def abtractAnnotation(m: MethodSymbol) = {
+    val typeParams = m.returnType.typeArgs
+    if(typeParams.size!=0) {
+      val first = typeParams(0)
+      val second = typeParams(1)
+      val f = first.members.collect {
+        case m: MethodSymbol if m isCaseAccessor =>
+          getFiledAnnotationInfo(m)
+      }
+      val s = second.members.collect {
+        case m: MethodSymbol if m isCaseAccessor =>
+          getFiledAnnotationInfo(m)
+      }
+
+      (f ++ s).toString
+
+    } else {
+      ""
+    }
+
+  }
+
+  private def getFiledAnnotationInfo(m: MethodSymbol) = {
+    val annotations = m.annotations
+    println(s"method -> ${m}, annotations ->${annotations}")
+    s"method -> ${m}, annotations ->${annotations}"
+  }
+
+  def api[C: c.WeakTypeTag](a: c.Expr[Any]) = {
     val controller = c.weakTypeTag[C].tpe
     val ms = weakTypeTag[C].tpe.decls.collect {
-      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
+      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => {
+        m
+      }
     }.toList
     val apis  = extractApis(ms)
     q"$apis"
   }
 
   def routes[T: c.WeakTypeTag](a: c.Expr[T]) = {
+    // product
+    // val ms = weakTypeTag[T].tpe.decls.collect {
+    //   case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
+    // }.toList
+
+    // val routes =  ms.map { m =>
+    //   val r = extractRoute(m)
+    //   (r.requestPath) -> genMethod[T](a,m)
+    // }.toMap
+
+    //test
     val ms = weakTypeTag[T].tpe.decls.collect {
-      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
+      case m: MethodSymbol if !m.isConstructor  => m
     }.toList
 
     val routes =  ms.map { m =>
       val r = extractRoute(m)
-      (r.requestPath) -> genMethod[T](a,m)
+      ("lala") -> genMethod[T](a,m)
     }.toMap
 
      q"_root_.scala.collection.immutable.Map(..$routes)"
@@ -52,7 +104,7 @@ class Macros(val c: Context) {
   }
 
   private def getActionDescrip(m: MethodSymbol):Map[String, Any] = {
-    println(s"methodname -> ${m}")
+    // println(s"methodname -> ${m}")
     val ans = m.annotations
     if(ans.nonEmpty) {
       val a = ans(0).tree.productElement(1)
@@ -105,6 +157,7 @@ class Macros(val c: Context) {
       t.members.collect {
         case m: MethodSymbol if m.isCaseAccessor =>
           val des = getActionDescrip(m)
+          println(s"desssss -> ${des}")
           if(isBasicType(m.returnType)) {
             (m.name.toString, Map("type" -> dealMultiplyName(m.returnType.toString)) ++ des )
           } else if (isList(m.returnType)) { // 用于成员含有List类型

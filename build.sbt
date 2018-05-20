@@ -40,13 +40,16 @@ val akkaDeps = Seq(
 lazy val `play-swagger-api` = project
   .in(file("play-swagger-api"))
   .settings(commonSettings: _*)
-  .settings(
-    libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play"           % playVersion,
-      "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
-    ) ++ akkaDeps
-  )
+
+
+
 
 lazy val `play-swagger-core` = project
   .in(file("play-swagger-core"))
   .dependsOn(`play-swagger-api` % "compile->compile;test->test")
+.settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.play" %% "play"           % playVersion,
+      "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
+    ) ++ akkaDeps
+)
