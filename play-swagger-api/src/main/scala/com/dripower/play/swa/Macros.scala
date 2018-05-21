@@ -280,70 +280,32 @@ class Macros(val c: Context) {
     }
   }
 
-  private def parameterConf:Map[String, String] = {
-    demoControllerParameter ++ scoreApiParameter ++ scoreInviteApi
-  }
+  private def getPropertiese = {
+    import java.io.BufferedInputStream
+    import java.io.FileInputStream
+    import java.util.Properties
+    import java.io.File
+    import java.io.BufferedReader
+    import java.io.InputStreamReader
+    val fis = new FileInputStream(new File("/home/ygh/project/play-swa-demo/server/conf/parameter.properties"))
 
-  private def demoControllerParameter:Map[String, String] = {
-    Map(
-      "DemoController.examplePostAction.PersonGet.id" -> "人的id",
-      "DemoController.examplePostAction.Person.id" -> "人的id",
-      "DemoController.examplePostAction.Person.name" -> "人的名字",
-      "DemoController.examplePostAction.Person.age" -> "人的年龄",
-      "DemoController.examplePostAction.Person.avatar" -> "人的头像"
-    )
-  }
-
-  private def scoreApiParameter:Map[String, String] = {
-    Map(
-      "ScoreApi.queryScore.ScoreGet.weixinId" -> "公众号的微信ID",
-      "ScoreApi.queryScore.ScoreGet.openid" -> "用户的 openid",
-      "ScoreApi.queryScore.Score.openid" -> "用户的 openid",
-      "ScoreApi.queryScore.Score.weixinId" -> "公众号的微信ID",
-      "ScoreApi.queryScore.Score.score" -> "用户当前拥有积分",
-      "ScoreApi.queryScore.Score.gmtCreate" -> "积分记录创建时间",
-      "ScoreApi.queryScore.Score.gmtModified" -> "积分记录修改时间",
-      "ScoreApi.updateScore.ScoreUpdateForm.openid" -> "用户的 openid",
-      "ScoreApi.updateScore.ScoreUpdateForm.weixinId" -> "公众号的微信I",
-      "ScoreApi.updateScore.ScoreUpdateForm.score" -> "积分增减数量，正数表示加积分，负数表示减积分",
-      "ScoreApi.updateScore.Score.openid" -> "用户的 openid",
-      "ScoreApi.updateScore.Score.weixinId" -> "公众号的微信ID",
-      "ScoreApi.updateScore.Score.score" -> "用户当前拥有积分",
-      "ScoreApi.updateScore.Score.gmtCreate" -> "积分记录创建时间",
-      "ScoreApi.updateScore.Score.gmtModified" -> "积分记录修改时间"
-    )
-  }
-
-  private def scoreInviteApi = {
-    Map(
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteQueryFrom.weixinId" -> "公众号的微信 id",
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteQueryFrom.openid" -> "用户的openid",
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.weixinId" -> "公众号的微信 id",
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.inviteOpenid" -> "邀请人的 openid",
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.invitedOpenid" -> "被邀请人的 openid",
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.inviteRuleId" -> "邀请规则 id",
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.gmtCreate" -> "积分记录创建时间",
-      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.gmtModified" -> "积分记录修改时间",
-      "ScoreInviteApi.addInviteRecord.AddInviteRecord.weixinId" -> "公众号的微信 id",
-      "ScoreInviteApi.addInviteRecord.AddInviteRecord.inviteOpenid" -> "邀请人的 openid",
-      "ScoreInviteApi.addInviteRecord.AddInviteRecord.invitedOpenid" -> "被邀请人的 openid",
-       "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.weixinId" -> "公众号的微信 id",
-      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.inviteOpenid" -> "邀请人的 openid",
-      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.invitedOpenid" -> "被邀请人的 openid",
-      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.inviteRuleId" -> "邀请规则 id",
-      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.gmtCreate" -> "积分记录创建时间",
-      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.gmtModified" -> "积分记录修改时间"
-    )
+    val br = new BufferedReader(new InputStreamReader(fis))
+    val properties = new Properties()
+    properties.load(br)
+    properties
   }
 
   private def getDescByKey(key:String):String = {
-    parameterConf.get(key) match {
-      case Some(r) => r
-      case None => ""
+    val prop = getPropertiese
+    val v = prop.getProperty(key)
+    if(v == null) {
+      ""
+    } else {
+      v
     }
   }
 
-  private def getParameterDes(cName: String, mName: String,pcName:String, fieldName: String) = {
+  private def getParameterDes(cName: String, mName: String,pcName:String, fieldName: String):Map[String, String] = {
     // println(s"cname -> ${cName}, mname -> ${mName}, pcName -> ${pcName}, fieldName -> ${fieldName}")
     val realCName = cName.split("\\.").last
     val realMName = mName.split(" ").last
