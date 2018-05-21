@@ -47,36 +47,26 @@ class Macros(val c: Context) {
     s"method -> ${m}, annotations ->${annotations}"
   }
 
-  def api[C: c.WeakTypeTag](a: c.Expr[Any]) = {
+  def api[C: c.WeakTypeTag]() = {
     val controller = c.weakTypeTag[C].tpe
     val ms = weakTypeTag[C].tpe.decls.collect {
       case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => {
         m
       }
     }.toList
-    val apis  = extractApis(ms)
+    val apis  = extractApis(controller.toString, ms)
     q"$apis"
   }
 
   def routes[T: c.WeakTypeTag](a: c.Expr[T]) = {
     // product
-    // val ms = weakTypeTag[T].tpe.decls.collect {
-    //   case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
-    // }.toList
-
-    // val routes =  ms.map { m =>
-    //   val r = extractRoute(m)
-    //   (r.requestPath) -> genMethod[T](a,m)
-    // }.toMap
-
-    //test
     val ms = weakTypeTag[T].tpe.decls.collect {
-      case m: MethodSymbol if !m.isConstructor  => m
+      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
     }.toList
 
     val routes =  ms.map { m =>
       val r = extractRoute(m)
-      ("lala") -> genMethod[T](a,m)
+      (r.requestPath) -> genMethod[T](a,m)
     }.toMap
 
      q"_root_.scala.collection.immutable.Map(..$routes)"
@@ -92,19 +82,18 @@ class Macros(val c: Context) {
   }
 
 
-  private def extractApis(list:List[MethodSymbol]) = {
+  private def extractApis(cname: String, list:List[MethodSymbol]) = {
     import scala.collection.mutable.ListBuffer
     val apis = new ListBuffer[String]()
     for(m <- list) {
       val r = extractRoute(m)
-      val api = extractApi(m, r, getActionDescrip(m))
+      val api = extractApi(cname, m, r, getActionDescrip(m))
       apis += toJSONStr(api)
     }
     apis.toList
   }
 
   private def getActionDescrip(m: MethodSymbol):Map[String, Any] = {
-    // println(s"methodname -> ${m}")
     val ans = m.annotations
     if(ans.nonEmpty) {
       val a = ans(0).tree.productElement(1)
@@ -115,7 +104,6 @@ class Macros(val c: Context) {
     } else  {
       Map("describe" -> "注解解析错误")
     }
-
   }
 
   private def removeStrQuotation(s: String): String = {
@@ -134,11 +122,11 @@ class Macros(val c: Context) {
   }
 
 
-  private def extractApi(m: MethodSymbol,r:PlayRoute,actionDes:Map[String, Any]) = {
+  private def extractApi(cName: String, m: MethodSymbol,r:PlayRoute,actionDes:Map[String, Any]) = {
     val typeParams = m.returnType.typeArgs
-    val req = extractMember(typeParams(0))
-    val res =  extractMember(typeParams(1))
-    val api:Map[String,Any] =actionDes ++  Map(("route",r.requestPath),("method",r.method),("req",req),("res",res))
+    val req = extractMember(cName, m.toString, typeParams(0))
+    val res = extractMember(cName, m.toString, typeParams(1))
+    val api:Map[String,Any] = actionDes ++  Map(("route",r.requestPath),("method",r.method),("req",req),("res",res))
     api
   }
 
@@ -150,14 +138,14 @@ class Macros(val c: Context) {
    * 对于 List[基本类型] 如 names: List[String] 使用 names: Map{type -> List[String], descrip -> xxx}
    * 对于 List[包装类型] 如 friends: List[Friend] 使用 friends: List[Friends]: Map{descrip -> xxx, type -> Map{"name" -> Map{type -> String, descrip -> xxx }}}
    */
-  private def extractMember(t:c.universe.Type):Map[String,Any] = {
+  private def extractMember(cName: String, mName:String, t:c.universe.Type):Map[String,Any] = {
     if(isList(t)) { // 用于t直接为List类型
-      Map(("List",extractMember(t.typeArgs(0))))
+      Map(("List",extractMember(cName, mName, t.typeArgs(0))))
     } else {
       t.members.collect {
         case m: MethodSymbol if m.isCaseAccessor =>
-          val des = getActionDescrip(m)
-          println(s"desssss -> ${des}")
+          val des = getParameterDes(cName, mName, t.toString, m.toString)
+          println(s"describe -> ${des}")
           if(isBasicType(m.returnType)) {
             (m.name.toString, Map("type" -> dealMultiplyName(m.returnType.toString)) ++ des )
           } else if (isList(m.returnType)) { // 用于成员含有List类型
@@ -165,17 +153,16 @@ class Macros(val c: Context) {
             if(isBasicType(t)) { // List的基本类型，如List[String]
               (m.name.toString, Map("type" -> m.returnType.toString) ++ des)
             } else {
-              (s"${m.name.toString}:${dealMultiplyName(m.returnType.toString)}", Map("type" -> extractMember(t)) ++ des ) // List的对象类型，如List[Person]
+              (s"${m.name.toString}:${dealMultiplyName(m.returnType.toString)}", Map("type" -> extractMember(cName, mName, t)) ++ des ) // List的对象类型，如List[Person]
             }
           }
           else { //对象包对象的情况
-            (m.name.toString, Map("type" -> extractMember(m.returnType)) ++ des)
+            (m.name.toString, Map("type" -> extractMember(cName, mName, m.returnType)) ++ des)
           }
 
       }.toMap
     }
   }
-
   private def isList(t:c.universe.Type):Boolean = {
     val s = t.toString
     val tStr = s.contains("[") match {
@@ -291,6 +278,80 @@ class Macros(val c: Context) {
         false
       }
     }
+  }
+
+  private def parameterConf:Map[String, String] = {
+    demoControllerParameter ++ scoreApiParameter ++ scoreInviteApi
+  }
+
+  private def demoControllerParameter:Map[String, String] = {
+    Map(
+      "DemoController.examplePostAction.PersonGet.id" -> "人的id",
+      "DemoController.examplePostAction.Person.id" -> "人的id",
+      "DemoController.examplePostAction.Person.name" -> "人的名字",
+      "DemoController.examplePostAction.Person.age" -> "人的年龄",
+      "DemoController.examplePostAction.Person.avatar" -> "人的头像"
+    )
+  }
+
+  private def scoreApiParameter:Map[String, String] = {
+    Map(
+      "ScoreApi.queryScore.ScoreGet.weixinId" -> "公众号的微信ID",
+      "ScoreApi.queryScore.ScoreGet.openid" -> "用户的 openid",
+      "ScoreApi.queryScore.Score.openid" -> "用户的 openid",
+      "ScoreApi.queryScore.Score.weixinId" -> "公众号的微信ID",
+      "ScoreApi.queryScore.Score.score" -> "用户当前拥有积分",
+      "ScoreApi.queryScore.Score.gmtCreate" -> "积分记录创建时间",
+      "ScoreApi.queryScore.Score.gmtModified" -> "积分记录修改时间",
+      "ScoreApi.updateScore.ScoreUpdateForm.openid" -> "用户的 openid",
+      "ScoreApi.updateScore.ScoreUpdateForm.weixinId" -> "公众号的微信I",
+      "ScoreApi.updateScore.ScoreUpdateForm.score" -> "积分增减数量，正数表示加积分，负数表示减积分",
+      "ScoreApi.updateScore.Score.openid" -> "用户的 openid",
+      "ScoreApi.updateScore.Score.weixinId" -> "公众号的微信ID",
+      "ScoreApi.updateScore.Score.score" -> "用户当前拥有积分",
+      "ScoreApi.updateScore.Score.gmtCreate" -> "积分记录创建时间",
+      "ScoreApi.updateScore.Score.gmtModified" -> "积分记录修改时间"
+    )
+  }
+
+  private def scoreInviteApi = {
+    Map(
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteQueryFrom.weixinId" -> "公众号的微信 id",
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteQueryFrom.openid" -> "用户的openid",
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.weixinId" -> "公众号的微信 id",
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.inviteOpenid" -> "邀请人的 openid",
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.invitedOpenid" -> "被邀请人的 openid",
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.inviteRuleId" -> "邀请规则 id",
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.gmtCreate" -> "积分记录创建时间",
+      "ScoreInviteApi.queryScoreInviteRecords.ScoreInviteRecord.gmtModified" -> "积分记录修改时间",
+      "ScoreInviteApi.addInviteRecord.AddInviteRecord.weixinId" -> "公众号的微信 id",
+      "ScoreInviteApi.addInviteRecord.AddInviteRecord.inviteOpenid" -> "邀请人的 openid",
+      "ScoreInviteApi.addInviteRecord.AddInviteRecord.invitedOpenid" -> "被邀请人的 openid",
+       "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.weixinId" -> "公众号的微信 id",
+      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.inviteOpenid" -> "邀请人的 openid",
+      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.invitedOpenid" -> "被邀请人的 openid",
+      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.inviteRuleId" -> "邀请规则 id",
+      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.gmtCreate" -> "积分记录创建时间",
+      "ScoreInviteApi.addInviteRecord.ScoreInviteRecord.gmtModified" -> "积分记录修改时间"
+    )
+  }
+
+  private def getDescByKey(key:String):String = {
+    parameterConf.get(key) match {
+      case Some(r) => r
+      case None => ""
+    }
+  }
+
+  private def getParameterDes(cName: String, mName: String,pcName:String, fieldName: String) = {
+    // println(s"cname -> ${cName}, mname -> ${mName}, pcName -> ${pcName}, fieldName -> ${fieldName}")
+    val realCName = cName.split("\\.").last
+    val realMName = mName.split(" ").last
+    val realPcName = pcName.split("\\.").last
+    val realFName = fieldName.split(" ").last
+    val key = s"${realCName}.${realMName}.${realPcName}.${realFName}"
+    println(s"describe key -> ${key}")
+    Map("describe" -> getDescByKey(key))
   }
 
 }
