@@ -60,23 +60,13 @@ class Macros(val c: Context) {
 
   def routes[T: c.WeakTypeTag](a: c.Expr[T]) = {
     // product
-    // val ms = weakTypeTag[T].tpe.decls.collect {
-    //   case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
-    // }.toList
-
-    // val routes =  ms.map { m =>
-    //   val r = extractRoute(m)
-    //   (r.requestPath) -> genMethod[T](a,m)
-    // }.toMap
-
-    //test
     val ms = weakTypeTag[T].tpe.decls.collect {
-      case m: MethodSymbol if !m.isConstructor  => m
+      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => m
     }.toList
 
     val routes =  ms.map { m =>
       val r = extractRoute(m)
-      ("lala") -> genMethod[T](a,m)
+      (r.requestPath) -> genMethod[T](a,m)
     }.toMap
 
      q"_root_.scala.collection.immutable.Map(..$routes)"
