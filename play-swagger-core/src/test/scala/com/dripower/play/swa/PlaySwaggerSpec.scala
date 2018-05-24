@@ -8,8 +8,4 @@ class PlaySwaggerSpec extends FlatSpec {
     println(s"router ->\n $result")
     assert(true)
   }
-
-  "A play swagger" should "return route" in {
-
-  }
 }
