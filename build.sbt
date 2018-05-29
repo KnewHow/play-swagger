@@ -1,15 +1,15 @@
-name              := "play-swagger"
-organization      := "dripcom.swagger"
-version           := "0.2-SNAPSHOT"
-scalaVersion      := "2.12.4"
+name              := "play-swagger" // 工程名称
+organization      := "dripcom.swagger" // 组织
+version           := "0.2-SNAPSHOT" // 工程版本号
+scalaVersion      := "2.12.4"       // Scala 版本号
 publishMavenStyle := true
 
 lazy val root =
   project
     .in(file("."))
     .aggregate(
-      `play-swagger-api`,
-      `play-swagger-core`
+      `play-swagger-api`, // 宏的代码
+      `play-swagger-core` // 测试用例的代码
     )
 
 val commonSettings = Seq(
@@ -37,16 +37,17 @@ val akkaDeps = Seq(
   "com.typesafe.akka" %% "akka-slf4j"
 ).map(_ % akkaVersion)
 
+// 设置 play-swagger-api 目录，并引入相关依赖
 lazy val `play-swagger-api` = project
   .in(file("play-swagger-api"))
   .settings(commonSettings: _*)
 
 
 
-
+// 设计 play-swagger-api 目录，并且引入相关 play 和 akka 的依赖
 lazy val `play-swagger-core` = project
   .in(file("play-swagger-core"))
-  .dependsOn(`play-swagger-api` % "compile->compile;test->test")
+  .dependsOn(`play-swagger-api` % "compile->compile;test->test") //引入上面的 play-swagger-api 的包
 .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play"           % playVersion,
