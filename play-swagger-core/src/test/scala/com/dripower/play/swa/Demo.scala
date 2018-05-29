@@ -40,7 +40,12 @@ object Person {
 class DemoController(val controllerComponents: ControllerComponents)(implicit ec: ExecutionContext) extends BaseController {
   val Swa = SwaActionBuilder(Action)
 
+
+  // Action 注解的使用
   @ActionAnnotation(descrip="测试 POST 请求")
+  /**
+   *  定义一个 Post 请求
+   */
   def examplePostAction: PostSwaAction [PersonGet, Person] = Swa.asyncPost[PersonGet,Person](parse.json[PersonGet]) { req =>
     val personGet = req.body
     Future.successful(Person(personGet.id, "foo", 1))
