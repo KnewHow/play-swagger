@@ -5,48 +5,11 @@ import scala.reflect.macros.blackbox._
 import org.joda.time._
 import play.swagger.route.api.PlayRoute
 
+//构造函数中引入 context 对象
 class Macros(val c: Context) {
   import c.universe._
 
-   def obtainAnnotation[C: c.WeakTypeTag]() = {
-    val methodList = weakTypeTag[C].tpe.decls.collect {
-      case m: MethodSymbol if !m.isConstructor  => m
-    }.toList
-
-    val results =  methodList.collect {
-       case m => abtractAnnotation(m)
-     }
-     q"$results"
-  }
-
-  private def abtractAnnotation(m: MethodSymbol) = {
-    val typeParams = m.returnType.typeArgs
-    if(typeParams.size!=0) {
-      val first = typeParams(0)
-      val second = typeParams(1)
-      val f = first.members.collect {
-        case m: MethodSymbol if m isCaseAccessor =>
-          getFiledAnnotationInfo(m)
-      }
-      val s = second.members.collect {
-        case m: MethodSymbol if m isCaseAccessor =>
-          getFiledAnnotationInfo(m)
-      }
-
-      (f ++ s).toString
-
-    } else {
-      ""
-    }
-
-  }
-
-  private def getFiledAnnotationInfo(m: MethodSymbol) = {
-    val annotations = m.annotations
-    println(s"method -> ${m}, annotations ->${annotations}")
-    s"method -> ${m}, annotations ->${annotations}"
-  }
-
+  //宏实现函数，C 表示类型参数
   def api[C: c.WeakTypeTag]() = {
     val controller = c.weakTypeTag[C].tpe
     val ms = weakTypeTag[C].tpe.decls.collect {
@@ -314,6 +277,45 @@ class Macros(val c: Context) {
     val key = s"${realCName}.${realMName}.${realPcName}.${realFName}"
     println(s"describe key -> ${key}")
     Map("describe" -> getDescByKey(key))
+  }
+
+  def obtainAnnotation[C: c.WeakTypeTag]() = {
+    val methodList = weakTypeTag[C].tpe.decls.collect {
+      case m: MethodSymbol if !m.isConstructor  => m
+    }.toList
+
+    val results =  methodList.collect {
+       case m => abtractAnnotation(m)
+     }
+     q"$results"
+  }
+
+  private def abtractAnnotation(m: MethodSymbol) = {
+    val typeParams = m.returnType.typeArgs
+    if(typeParams.size!=0) {
+      val first = typeParams(0)
+      val second = typeParams(1)
+      val f = first.members.collect {
+        case m: MethodSymbol if m isCaseAccessor =>
+          getFiledAnnotationInfo(m)
+      }
+      val s = second.members.collect {
+        case m: MethodSymbol if m isCaseAccessor =>
+          getFiledAnnotationInfo(m)
+      }
+
+      (f ++ s).toString
+
+    } else {
+      ""
+    }
+
+  }
+
+  private def getFiledAnnotationInfo(m: MethodSymbol) = {
+    val annotations = m.annotations
+    println(s"method -> ${m}, annotations ->${annotations}")
+    s"method -> ${m}, annotations ->${annotations}"
   }
 
 }

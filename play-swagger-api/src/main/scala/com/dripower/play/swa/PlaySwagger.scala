@@ -4,7 +4,9 @@ import scala.language.experimental.macros
 import shapeless._
 
 object PlaySwagger {
+  //定义宏
   def playApi[C]():List[String] =
+    //宏实现
     macro Macros.api[C]
 
 
