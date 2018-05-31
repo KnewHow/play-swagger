@@ -51,6 +51,7 @@ lazy val `play-swagger-core` = project
 .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play"           % playVersion,
-      "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
+      "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion,
+      "com.dripower" %% "play-circe" % "2609.1"
     ) ++ akkaDeps
 )

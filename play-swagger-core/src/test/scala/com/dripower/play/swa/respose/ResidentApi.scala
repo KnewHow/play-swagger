@@ -14,6 +14,9 @@ import dripower.validate._
 import scala.collection.immutable.List
 import scala.util._
 import play.swagger.response._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import play.api.libs.circe._
 
 case class ResidentGet(name: String)
 case class Resident(name: String, age: Int, role: Option[String])
@@ -36,14 +39,15 @@ object Resident {
       Json.stringify(
         Json.obj(
           "code" -> r.code,
-          "data" -> Json.toJson(r.data)
+          "data" -> r.data.asJson
         )
+        // r.asJson
       )
     ), Some("application/json")
   )
   // implicit val residentWriteable = Json.writes[Resident]
 }
-class ResidentApi @Inject() (val controllerComponents : ControllerComponents)(implicit ec: ExecutionContext) extends BaseController {
+class ResidentApi @Inject() (val controllerComponents : ControllerComponents)(implicit ec: ExecutionContext) extends BaseController with Circe {
   val Swa = SwaActionBuilder(Action)
 
   @ActionAnnotation("获取居民信息")

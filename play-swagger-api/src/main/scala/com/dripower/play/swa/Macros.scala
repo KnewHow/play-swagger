@@ -13,10 +13,10 @@ class Macros(val c: Context) {
   def api[C: c.WeakTypeTag]() = {
     val controller = c.weakTypeTag[C].tpe
     val ms = weakTypeTag[C].tpe.decls.collect {
-      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => {
+      case m: MethodSymbol if !m.isConstructor && isSwaAction(m)  => { // 把构造函数和不是 SwaAction 返回值的方法过滤掉
         m
       }
-    }.toList
+    }.toList  // 把最终的结果转换为一个包含所有方法的 List 集合
     val apis  = extractApis(controller.toString, ms)
     q"$apis"
   }
