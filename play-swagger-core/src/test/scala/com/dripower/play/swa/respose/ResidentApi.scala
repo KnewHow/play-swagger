@@ -1,4 +1,4 @@
-package test.response
+package test.resident
 
 import akka.util.ByteString
 import play.api.mvc._
@@ -14,9 +14,7 @@ import dripower.validate._
 import scala.collection.immutable.List
 import scala.util._
 import play.swagger.response._
-import io.circe.generic.auto._
-import io.circe.syntax._
-import play.api.libs.circe._
+import play.swagger.api._
 
 case class ResidentGet(name: String)
 case class Resident(name: String, age: Int, role: Option[String])
@@ -39,15 +37,14 @@ object Resident {
       Json.stringify(
         Json.obj(
           "code" -> r.code,
-          "data" -> r.data.asJson
+          "data" -> Json.toJson(r.data)
         )
-        // r.asJson
       )
     ), Some("application/json")
   )
   // implicit val residentWriteable = Json.writes[Resident]
 }
-class ResidentApi @Inject() (val controllerComponents : ControllerComponents)(implicit ec: ExecutionContext) extends BaseController with Circe {
+class ResidentApi @Inject() (val controllerComponents : ControllerComponents)(implicit ec: ExecutionContext) extends BaseController  {
   val Swa = SwaActionBuilder(Action)
 
   @ActionAnnotation("获取居民信息")
@@ -60,5 +57,11 @@ class ResidentApi @Inject() (val controllerComponents : ControllerComponents)(im
     Future.successful(
       r
     )
+  }
+}
+
+object ResidentApi {
+  def api = {
+    PlaySwagger.playApi[ResidentApi]()
   }
 }

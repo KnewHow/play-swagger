@@ -55,8 +55,9 @@ class ValidatApi(val controllerComponents: ControllerComponents)(implicit ec: Ex
 }
 object ExampleControllerApi {
   def getApi = {
-    val r = PlaySwagger.playApi[ValidatApi]()
-    r
+    // val r = PlaySwagger.playApi[ValidatApi]()
+    // r
+    ""
   }
 
 }

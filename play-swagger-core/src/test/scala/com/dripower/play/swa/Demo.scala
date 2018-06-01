@@ -49,9 +49,10 @@ class DemoController(val controllerComponents: ControllerComponents)(implicit ec
 }
 object DemoController {
   def getApi = {
-    import demo2._
-    val r = PlaySwagger.playApi[DemoController]()
-    r
+    // import demo2._
+    // val r = PlaySwagger.playApi[DemoController]()
+    // r
+    ""
   }
 
 }

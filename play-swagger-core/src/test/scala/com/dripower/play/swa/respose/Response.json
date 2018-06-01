@@ -1,0 +1,46 @@
+[
+    {
+        "score":
+        [
+            {
+                "scoreInvite":[
+                    {
+                        "code":{
+                            "type":"Int",
+                            "describe":"状态码 200 表示成功 其它的表示失败"
+                        },
+                        "data":{
+                            "method":"POST",
+                            "route":"queryScore",
+                            "describe":"积分查询",
+                            "req":{
+                                "openid":{
+                                    "type":"String",
+                                    "describe":"用户的openid"
+                                },
+                                "weixinId":{
+                                    "type":"String",
+                                    "describe":"公众号的微信 id"
+                                }
+                            },
+                            "res":{
+                                "weixinId":{
+                                    "type":"String",
+                                    "describe":"公众号的微信 id"
+                                }
+                            }
+                        }
+                    },
+                    {
+                    }
+                ]
+            },
+            {
+
+            }
+        ]
+    },
+    {
+
+    }
+]
