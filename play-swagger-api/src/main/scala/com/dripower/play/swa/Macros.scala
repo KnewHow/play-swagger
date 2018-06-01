@@ -86,18 +86,16 @@ class Macros(val c: Context) {
 
 
   private def extractApi(cName: String, m: MethodSymbol,r:PlayRoute,actionDes:Map[String, Any]) = {
-    val code:Map[String,Any] = Map("code" -> Map("type" -> "int","describe" -> "状态码，200 表示成功，其它表示失败"))
+
 
     val typeParams = m.returnType.typeArgs
     val req = extractMember(cName, m.toString, typeParams(0))
-
     val resT = typeParams(1).typeArgs(0)
     val res = extractMember(cName, m.toString, resT)
-    val api:Map[String,Any] = actionDes ++  Map(("route",r.requestPath),("method",r.method),("req",req),("res",res))
-
-    val data:Map[String, Any] = Map("data" -> api)
-
-    code ++ data
+    val code:Map[String,Any] = Map("code" -> Map("type" -> "int","describe" -> "状态码，200 表示成功，其它表示失败"))
+    val data:Map[String, Any] = Map("data" -> res)
+    val api:Map[String,Any] = actionDes ++  Map(("route",r.requestPath),("method",r.method),("req",req),("res", code ++ data))
+    api
   }
 
   /**
