@@ -9,7 +9,7 @@ class RouteSpec extends FlatSpec {
   "A route macro" should "success" in {
     val c = new DemoController
     val m = PlaySwagger.routes[DemoController](c)
-    var lamda = m.get("lala")
+    var lamda = m.get("test-DemoController-demoAction")
     println(s"lamda -> ${lamda}")
     lamda match {
       case Some(r) => r(HNil)

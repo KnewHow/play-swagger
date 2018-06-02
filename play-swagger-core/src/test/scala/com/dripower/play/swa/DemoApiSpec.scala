@@ -3,10 +3,10 @@ package test.com.dripower.play.swa
 import org. scalatest._
 import demo._
 
-class DemoSpec extends FlatSpec {
-  "A Demo test" should "suceess" in {
+class DemoApiSpec extends FlatSpec {
+  "test obtain DemoApi API document data" should "suceess" in {
     val a = DemoController.getApi
-    println(s"aaaaaaaaa -> ${a}")
+    println(s"api -> ${a}")
     assert(true)
   }
 }
